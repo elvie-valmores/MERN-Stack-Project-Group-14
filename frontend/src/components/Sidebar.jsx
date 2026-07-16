@@ -1,11 +1,14 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import achievementLogo from "../assets/images/223-cropped.png";
 
 function Sidebar() {
+  const navigate = useNavigate();
+
   const logout = () => {
     localStorage.removeItem("user");
-    window.location.href = "/";
+    localStorage.removeItem("rememberedEmail");
+    navigate("/login", { replace: true });
   };
 
   return (

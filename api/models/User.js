@@ -4,18 +4,34 @@ const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         email: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            lowercase: true,
+            trim: true
         },
         password: {
             type: String,
             required: true
         },
         steamId: {
+            type: String,
+            default: "",
+            trim: true
+        },
+        steamName: {
+            type: String,
+            default: ""
+        },
+        steamAvatar: {
+            type: String,
+            default: ""
+        },
+        steamProfileUrl: {
             type: String,
             default: ""
         },
