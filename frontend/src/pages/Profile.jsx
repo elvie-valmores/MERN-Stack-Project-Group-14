@@ -1,10 +1,21 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import {
+  apiRequest,
+  clearUser,
+  getStoredUser,
+  getToken,
+  saveUser
+} from "../services/api";
+
+import {
   CalendarDays,
   CheckCircle2,
   Edit3,
+  Eye,
+  EyeOff,
   Gamepad2,
+  KeyRound,
   Mail,
   Save,
   ShieldCheck,
@@ -18,7 +29,11 @@ function Profile() {
     localStorage.getItem("user") || "{}"
   );
 
-  const userData = storedUser.user || storedUser;
+  const userData =
+    storedUser.user || storedUser;
+
+  const [profileUser, setProfileUser] =
+    useState(userData);
 
   const [formData, setFormData] = useState({
     name: userData.name || "Player",
@@ -26,62 +41,216 @@ function Profile() {
     steamId: userData.steamId || ""
   });
 
-  const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState("");
+  const [passwordData, setPasswordData] =
+    useState({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    });
 
-  useEffect(() => {
-    const currentStoredUser = JSON.parse(
+  const [editing, setEditing] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [messageType, setMessageType] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [savingProfile, setSavingProfile] =
+    useState(false);
+
+  const [changingPassword, setChangingPassword] =
+    useState(false);
+
+  const [showCurrentPassword, setShowCurrentPassword] =
+    useState(false);
+
+  const [showNewPassword, setShowNewPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+  const getStoredUser = () => {
+    return JSON.parse(
       localStorage.getItem("user") || "{}"
     );
+  };
 
-    const currentUserData =
-      currentStoredUser.user || currentStoredUser;
+  const getToken = () => {
+    const currentStoredUser = getStoredUser();
 
-    setFormData({
-      name: currentUserData.name || "Player",
-      email: currentUserData.email || "",
-      steamId: currentUserData.steamId || ""
-    });
+    return (
+      currentStoredUser.token ||
+      currentStoredUser.user?.token ||
+      ""
+    );
+  };
+
+  const showMessage = (
+    text,
+    type = "success"
+  ) => {
+    setMessage(text);
+    setMessageType(type);
+
+    setTimeout(() => {
+      setMessage("");
+      setMessageType("");
+    }, 3500);
+  };
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const currentStoredUser =
+          getStoredUser();
+
+        const currentUser =
+          currentStoredUser.user ||
+          currentStoredUser;
+
+        const token = getToken();
+
+        setProfileUser(currentUser);
+
+        setFormData({
+          name: currentUser.name || "Player",
+          email: currentUser.email || "",
+          steamId: currentUser.steamId || ""
+        });
+
+        if (!token) {
+          return;
+        }
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || "http://localhost:5050"}/api/auth/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("user");
+          }
+
+          showMessage(
+            data.message ||
+              "Could not load profile.",
+            "error"
+          );
+
+          return;
+        }
+
+        const updatedUser = {
+          ...data,
+          token
+        };
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(updatedUser)
+        );
+
+        setProfileUser(updatedUser);
+
+        setFormData({
+          name: data.name || "Player",
+          email: data.email || "",
+          steamId: data.steamId || ""
+        });
+      } catch (error) {
+        showMessage(
+          "Could not connect to the API.",
+          "error"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
   }, []);
 
   const handleChange = (event) => {
     setFormData({
       ...formData,
-      [event.target.name]: event.target.value
+      [event.target.name]:
+        event.target.value
     });
   };
 
-  const getStoredUserAndToken = () => {
-    const currentStoredUser = JSON.parse(
-      localStorage.getItem("user") || "{}"
-    );
+  const handlePasswordChange = (event) => {
+    setPasswordData({
+      ...passwordData,
+      [event.target.name]:
+        event.target.value
+    });
+  };
 
-    const token =
-      currentStoredUser.token ||
-      currentStoredUser.user?.token;
+  const cancelEditing = () => {
+    setFormData({
+      name:
+        profileUser?.name || "Player",
+      email:
+        profileUser?.email || "",
+      steamId:
+        profileUser?.steamId || ""
+    });
 
-    return {
-      currentStoredUser,
-      token
-    };
+    setEditing(false);
   };
 
   const handleSave = async () => {
+    const token = getToken();
+
+    if (!token) {
+      showMessage(
+        "Please log in again.",
+        "error"
+      );
+      return;
+    }
+
+    if (!formData.name.trim()) {
+      showMessage(
+        "Name cannot be empty.",
+        "error"
+      );
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      showMessage(
+        "Email cannot be empty.",
+        "error"
+      );
+      return;
+    }
+
+    setSavingProfile(true);
+
     try {
-      const { token } = getStoredUserAndToken();
-
-      if (!token) {
-        setMessage("Please log in again.");
-        return;
-      }
-
       const response = await fetch(
-        "http://localhost:5050/api/auth/profile",
+        `${import.meta.env.VITE_API_URL || "http://localhost:5050"}/api/auth/profile`,
         {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            "Content-Type":
+              "application/json",
+            Authorization:
+              `Bearer ${token}`
           },
           body: JSON.stringify({
             name: formData.name,
@@ -94,73 +263,204 @@ function Profile() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(
-          data.message || "Could not save profile."
+        showMessage(
+          data.message ||
+            "Could not save profile.",
+          "error"
         );
         return;
       }
 
+      const updatedUser = {
+        ...data,
+        token: data.token || token
+      };
+
       localStorage.setItem(
         "user",
-        JSON.stringify(data)
+        JSON.stringify(updatedUser)
       );
 
+      setProfileUser(updatedUser);
+
       setFormData({
-        name: data.name,
-        email: data.email,
-        steamId: data.steamId || ""
+        name:
+          updatedUser.name || "Player",
+        email:
+          updatedUser.email || "",
+        steamId:
+          updatedUser.steamId || ""
       });
 
       setEditing(false);
-      setMessage(
-        "Profile changes saved to MongoDB."
+
+      showMessage(
+        "Profile changes saved."
+      );
+    } catch (error) {
+      showMessage(
+        "Could not connect to the API.",
+        "error"
+      );
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    const token = getToken();
+
+    if (!token) {
+      showMessage(
+        "Please log in again.",
+        "error"
+      );
+      return;
+    }
+
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      showMessage(
+        "Please complete every password field.",
+        "error"
+      );
+      return;
+    }
+
+    if (
+      passwordData.newPassword !==
+      passwordData.confirmPassword
+    ) {
+      showMessage(
+        "New passwords do not match.",
+        "error"
+      );
+      return;
+    }
+
+    if (
+      passwordData.newPassword.length < 8
+    ) {
+      showMessage(
+        "New password must be at least 8 characters.",
+        "error"
+      );
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5050"}/api/auth/change-password`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type":
+              "application/json",
+            Authorization:
+              `Bearer ${token}`
+          },
+          body: JSON.stringify(
+            passwordData
+          )
+        }
       );
 
-      setTimeout(() => {
-        setMessage("");
-      }, 2500);
-    } catch (error) {
-      setMessage(
-        "Could not connect to the API."
+      const data = await response.json();
+
+      if (!response.ok) {
+        showMessage(
+          data.message ||
+            "Could not change password.",
+          "error"
+        );
+        return;
+      }
+
+      const currentStoredUser =
+        getStoredUser();
+
+      const currentUser =
+        currentStoredUser.user ||
+        currentStoredUser;
+
+      const updatedUser = {
+        ...currentUser,
+        token: data.token || token
+      };
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(updatedUser)
       );
+
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+
+      showMessage(
+        data.message ||
+          "Password changed successfully."
+      );
+    } catch (error) {
+      showMessage(
+        "Could not connect to the API.",
+        "error"
+      );
+    } finally {
+      setChangingPassword(false);
     }
   };
 
   const handleSteamConnect = async () => {
+    const token = getToken();
+    const steamId =
+      formData.steamId.trim();
+
+    if (!token) {
+      showMessage(
+        "Please log in again.",
+        "error"
+      );
+      return;
+    }
+
+    if (!steamId) {
+      showMessage(
+        "Enter your 17-digit Steam ID.",
+        "error"
+      );
+      return;
+    }
+
+    if (!/^\d{17}$/.test(steamId)) {
+      showMessage(
+        "Steam ID must contain exactly 17 numbers.",
+        "error"
+      );
+      return;
+    }
+
     try {
-      const {
-        currentStoredUser,
-        token
-      } = getStoredUserAndToken();
-
-      if (!token) {
-        setMessage("Please log in again.");
-        return;
-      }
-
-      const steamId = formData.steamId.trim();
-
-      if (!steamId) {
-        setMessage(
-          "Enter your 17-digit Steam ID."
-        );
-        return;
-      }
-
-      if (!/^\d{17}$/.test(steamId)) {
-        setMessage(
-          "Steam ID must contain exactly 17 numbers."
-        );
-        return;
-      }
-
       const response = await fetch(
-        "http://localhost:5050/api/steam/connect",
+        `${import.meta.env.VITE_API_URL || "http://localhost:5050"}/api/steam/connect`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            "Content-Type":
+              "application/json",
+            Authorization:
+              `Bearer ${token}`
           },
           body: JSON.stringify({
             steamId
@@ -171,22 +471,22 @@ function Profile() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(
+        showMessage(
           data.message ||
-            "Could not connect Steam."
+            "Could not connect Steam.",
+          "error"
         );
         return;
       }
 
-      const currentUserData =
-        currentStoredUser.user ||
-        currentStoredUser;
-
       const updatedUser = {
-        ...currentUserData,
-        steamId: data.steam.steamId,
-        steamName: data.steam.steamName,
-        steamAvatar: data.steam.steamAvatar,
+        ...profileUser,
+        steamId:
+          data.steam.steamId,
+        steamName:
+          data.steam.steamName,
+        steamAvatar:
+          data.steam.steamAvatar,
         steamProfileUrl:
           data.steam.steamProfileUrl,
         token
@@ -197,21 +497,21 @@ function Profile() {
         JSON.stringify(updatedUser)
       );
 
+      setProfileUser(updatedUser);
+
       setFormData((current) => ({
         ...current,
-        steamId: data.steam.steamId
+        steamId:
+          data.steam.steamId
       }));
 
-      setMessage(
+      showMessage(
         `Steam connected: ${data.steam.steamName}`
       );
-
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
     } catch (error) {
-      setMessage(
-        "Could not connect to the Steam API."
+      showMessage(
+        "Could not connect to the Steam API.",
+        "error"
       );
     }
   };
@@ -224,26 +524,30 @@ function Profile() {
       .slice(0, 2)
       .toUpperCase() || "P";
 
-  const currentStoredUser = JSON.parse(
-    localStorage.getItem("user") || "{}"
-  );
-
-  const currentUserData =
-    currentStoredUser.user ||
-    currentStoredUser;
-
   const steamAvatar =
-    currentUserData.steamAvatar || "";
+    profileUser?.steamAvatar || "";
 
   const steamName =
-    currentUserData.steamName || "";
+    profileUser?.steamName || "";
+
+  const gamesTracked =
+    profileUser?.gamesTracked || 0;
+
+  const achievementsUnlocked =
+    profileUser?.achievementsUnlocked || 0;
+
+  const achievementXP =
+    profileUser?.achievementXP || 0;
+
+  const level =
+    profileUser?.level || 1;
 
   const createdAt =
-    currentUserData.createdAt || "";
+    profileUser?.createdAt || "";
 
   const memberSince = createdAt
     ? new Date(createdAt).getFullYear()
-    : 2026;
+    : new Date().getFullYear();
 
   return (
     <main className="dashboard-page">
@@ -259,16 +563,20 @@ function Profile() {
             <h1>Profile</h1>
 
             <p>
-              Manage your account information and
-              Steam connection.
+              Manage your account information,
+              password, and Steam connection.
             </p>
           </div>
 
           <button
             className="profile-edit-button"
-            onClick={() =>
-              setEditing(!editing)
-            }
+            onClick={() => {
+              if (editing) {
+                cancelEditing();
+              } else {
+                setEditing(true);
+              }
+            }}
           >
             <Edit3 size={18} />
 
@@ -279,7 +587,9 @@ function Profile() {
         </div>
 
         {message && (
-          <div className="profile-success-message">
+          <div
+            className={`profile-page-message ${messageType}`}
+          >
             <CheckCircle2 size={19} />
             {message}
           </div>
@@ -290,11 +600,7 @@ function Profile() {
             <img
               className="profile-avatar"
               src={steamAvatar}
-              alt={
-                steamName
-                  ? `${steamName} Steam avatar`
-                  : "Steam avatar"
-              }
+              alt="Steam avatar"
             />
           ) : (
             <div className="profile-avatar">
@@ -309,9 +615,11 @@ function Profile() {
             </span>
 
             <h2>
-              {steamName ||
-                formData.name ||
-                "Player"}
+              {loading
+                ? "Loading..."
+                : steamName ||
+                  formData.name ||
+                  "Player"}
             </h2>
 
             <p>
@@ -325,7 +633,10 @@ function Profile() {
             <Trophy />
 
             <div>
-              <strong>Level 24</strong>
+              <strong>
+                Level {level}
+              </strong>
+
               <span>
                 Achievement Hunter
               </span>
@@ -338,8 +649,13 @@ function Profile() {
             <Gamepad2 />
 
             <div>
-              <strong>24</strong>
-              <span>Games Tracked</span>
+              <strong>
+                {gamesTracked}
+              </strong>
+
+              <span>
+                Games Tracked
+              </span>
             </div>
           </div>
 
@@ -347,7 +663,10 @@ function Profile() {
             <Trophy />
 
             <div>
-              <strong>184</strong>
+              <strong>
+                {achievementsUnlocked}
+              </strong>
+
               <span>Unlocked</span>
             </div>
           </div>
@@ -356,8 +675,13 @@ function Profile() {
             <Sparkles />
 
             <div>
-              <strong>9,440</strong>
-              <span>Achievement XP</span>
+              <strong>
+                {achievementXP.toLocaleString()}
+              </strong>
+
+              <span>
+                Achievement XP
+              </span>
             </div>
           </div>
 
@@ -365,8 +689,13 @@ function Profile() {
             <CalendarDays />
 
             <div>
-              <strong>{memberSince}</strong>
-              <span>Member Since</span>
+              <strong>
+                {memberSince}
+              </strong>
+
+              <span>
+                Member Since
+              </span>
             </div>
           </div>
         </div>
@@ -419,7 +748,6 @@ function Profile() {
                   value={formData.email}
                   onChange={handleChange}
                   disabled={!editing}
-                  placeholder="No email available"
                 />
               </div>
 
@@ -427,9 +755,13 @@ function Profile() {
                 <button
                   className="profile-save-button"
                   onClick={handleSave}
+                  disabled={savingProfile}
                 >
                   <Save size={18} />
-                  Save Changes
+
+                  {savingProfile
+                    ? "Saving..."
+                    : "Save Changes"}
                 </button>
               )}
             </div>
@@ -442,17 +774,18 @@ function Profile() {
                   Steam Integration
                 </span>
 
-                <h2>Connect Steam</h2>
+                <h2>
+                  Connect Steam
+                </h2>
               </div>
 
               <Gamepad2 />
             </div>
 
             <p className="steam-profile-description">
-              Add your Steam ID to
-              automatically import your library,
-              playtime, and achievement
-              progress.
+              Add your Steam ID to import
+              your public game library and
+              achievements.
             </p>
 
             <label htmlFor="profile-steam-id">
@@ -488,13 +821,172 @@ function Profile() {
               <ShieldCheck />
 
               <p>
-                Your Steam credentials are
-                never stored. We only use your
-                public Steam ID.
+                Your Steam password is never
+                stored. Only your public Steam
+                ID is used.
               </p>
             </div>
           </section>
         </div>
+
+        <section className="profile-panel change-password-panel">
+          <div className="profile-panel-heading">
+            <div>
+              <span className="panel-eyebrow">
+                Security
+              </span>
+
+              <h2>Change Password</h2>
+            </div>
+
+            <KeyRound />
+          </div>
+
+          <p className="change-password-description">
+            Enter your current password before
+            choosing a new password.
+          </p>
+
+          <form
+            className="change-password-form"
+            onSubmit={handlePasswordSubmit}
+          >
+            <div className="password-field">
+              <label htmlFor="current-password">
+                Current Password
+              </label>
+
+              <div className="profile-input-group">
+                <KeyRound size={19} />
+
+                <input
+                  id="current-password"
+                  name="currentPassword"
+                  type={
+                    showCurrentPassword
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Enter current password"
+                  value={
+                    passwordData.currentPassword
+                  }
+                  onChange={
+                    handlePasswordChange
+                  }
+                />
+
+                <button
+                  type="button"
+                  className="password-eye-button"
+                  onClick={() =>
+                    setShowCurrentPassword(
+                      !showCurrentPassword
+                    )
+                  }
+                >
+                  {showCurrentPassword
+                    ? <EyeOff size={18} />
+                    : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="password-field">
+              <label htmlFor="new-password">
+                New Password
+              </label>
+
+              <div className="profile-input-group">
+                <KeyRound size={19} />
+
+                <input
+                  id="new-password"
+                  name="newPassword"
+                  type={
+                    showNewPassword
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="At least 8 characters"
+                  value={
+                    passwordData.newPassword
+                  }
+                  onChange={
+                    handlePasswordChange
+                  }
+                />
+
+                <button
+                  type="button"
+                  className="password-eye-button"
+                  onClick={() =>
+                    setShowNewPassword(
+                      !showNewPassword
+                    )
+                  }
+                >
+                  {showNewPassword
+                    ? <EyeOff size={18} />
+                    : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="password-field">
+              <label htmlFor="confirm-password">
+                Confirm New Password
+              </label>
+
+              <div className="profile-input-group">
+                <KeyRound size={19} />
+
+                <input
+                  id="confirm-password"
+                  name="confirmPassword"
+                  type={
+                    showConfirmPassword
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Enter new password again"
+                  value={
+                    passwordData.confirmPassword
+                  }
+                  onChange={
+                    handlePasswordChange
+                  }
+                />
+
+                <button
+                  type="button"
+                  className="password-eye-button"
+                  onClick={() =>
+                    setShowConfirmPassword(
+                      !showConfirmPassword
+                    )
+                  }
+                >
+                  {showConfirmPassword
+                    ? <EyeOff size={18} />
+                    : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="profile-save-button change-password-button"
+              disabled={changingPassword}
+            >
+              <KeyRound size={18} />
+
+              {changingPassword
+                ? "Changing Password..."
+                : "Change Password"}
+            </button>
+          </form>
+        </section>
       </section>
     </main>
   );

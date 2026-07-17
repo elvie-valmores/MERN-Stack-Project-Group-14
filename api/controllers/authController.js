@@ -166,9 +166,83 @@ const updateProfile = async (req, res) => {
     }
 };
 
+const changePassword = async (req, res) => {
+    try {
+        const {
+            currentPassword,
+            newPassword,
+            confirmPassword
+        } = req.body;
+
+        if (
+            !currentPassword ||
+            !newPassword ||
+            !confirmPassword
+        ) {
+            return res.status(400).json({
+                message: "Please complete every password field."
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                message: "New passwords do not match."
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                message: "New password must be at least 8 characters."
+            });
+        }
+
+        if (currentPassword === newPassword) {
+            return res.status(400).json({
+                message: "New password must be different from the current password."
+            });
+        }
+
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found."
+            });
+        }
+
+        const passwordMatch = await bcrypt.compare(
+            currentPassword,
+            user.password
+        );
+
+        if (!passwordMatch) {
+            return res.status(401).json({
+                message: "Current password is incorrect."
+            });
+        }
+
+        user.password = await bcrypt.hash(
+            newPassword,
+            10
+        );
+
+        await user.save();
+
+        res.json({
+            message: "Password changed successfully.",
+            token: makeToken(user._id)
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Could not change password."
+        });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getProfile,
-    updateProfile
+    updateProfile,
+    changePassword
 };

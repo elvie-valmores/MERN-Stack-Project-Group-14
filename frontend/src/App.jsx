@@ -8,6 +8,12 @@ import MyGames from "./pages/MyGames";
 import Achievements from "./pages/Achievements";
 import Leaderboard from "./pages/Leaderboard";
 import GameDetails from "./pages/GameDetails";
+import About from "./pages/About";
+import ConnectSteam from "./pages/ConnectSteam";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Help from "./pages/Help";
+import Contact from "./pages/Contact";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
@@ -18,6 +24,13 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+
+      <Route path="/about" element={<About />} />
+      <Route path="/connect-steam" element={<ConnectSteam />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/help" element={<Help />} />
+      <Route path="/contact" element={<Contact />} />
 
       <Route
         path="/login"

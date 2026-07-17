@@ -3,6 +3,8 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
+const leaderboardRoutes = require("./routes/leaderboardRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 const steamRoutes = require("./routes/steamRoutes");
 
 dotenv.config();
@@ -18,6 +20,8 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/contact", contactRoutes);
 app.use("/api/steam", steamRoutes);
 
 const PORT = process.env.PORT || 5050;

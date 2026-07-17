@@ -1,61 +1,114 @@
-import { Link } from "react-router-dom";
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  Link,
+  useNavigate
+} from "react-router-dom";
+
 import Sidebar from "../components/Sidebar";
+import PageLoading from "../components/PageLoading";
+
 import {
   BarChart3,
-  Clock3,
   Gamepad2,
   Link2,
   Sparkles,
   Trophy
 } from "lucide-react";
 
+import {
+  apiRequest,
+  clearUser,
+  getCurrentUser,
+  getToken,
+  saveUser
+} from "../services/api";
+
 function Dashboard() {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const navigate = useNavigate();
 
-  const recentGames = [
-    {
-      name: "Elden Ring",
-      image:
-        "https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg",
-      progress: 42,
-      hours: 186
-    },
-    {
-      name: "Counter-Strike 2",
-      image:
-        "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg",
-      progress: 87,
-      hours: 425
-    },
-    {
-      name: "Red Dead Redemption 2",
-      image:
-        "https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg",
-      progress: 61,
-      hours: 298
-    }
-  ];
+  const [user, setUser] = useState(
+    getCurrentUser()
+  );
 
-  const recentAchievements = [
-    {
-      title: "Elden Lord",
-      game: "Elden Ring",
-      time: "Unlocked today",
-      icon: Trophy
-    },
-    {
-      title: "Sharpshooter",
-      game: "Counter-Strike 2",
-      time: "Unlocked yesterday",
-      icon: Sparkles
-    },
-    {
-      title: "Best in the West",
-      game: "Red Dead Redemption 2",
-      time: "Unlocked 3 days ago",
-      icon: Trophy
-    }
-  ];
+  const [loading, setLoading] =
+    useState(true);
+
+  const [message, setMessage] =
+    useState("");
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      const token = getToken();
+
+      if (!token) {
+        clearUser();
+
+        navigate("/login", {
+          replace: true
+        });
+
+        return;
+      }
+
+      try {
+        const data = await apiRequest(
+          "/api/auth/profile"
+        );
+
+        const updatedUser =
+          saveUser(data, token);
+
+        setUser(updatedUser);
+      } catch (error) {
+        if (error.status === 401) {
+          clearUser();
+
+          navigate("/login", {
+            replace: true
+          });
+
+          return;
+        }
+
+        setMessage(
+          error.message ||
+            "Could not load dashboard."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <main className="dashboard-page">
+        <Sidebar />
+
+        <section className="dashboard-content">
+          <PageLoading message="Loading your dashboard..." />
+        </section>
+      </main>
+    );
+  }
+
+  const gamesTracked =
+    user.gamesTracked || 0;
+
+  const totalAchievements =
+    user.totalAchievements || 0;
+
+  const achievementsUnlocked =
+    user.achievementsUnlocked || 0;
+
+  const completionPercentage =
+    user.completionPercentage || 0;
 
   return (
     <main className="dashboard-page">
@@ -64,29 +117,45 @@ function Dashboard() {
       <section className="dashboard-content">
         <div className="dashboard-heading-row">
           <div>
-            <span className="dashboard-eyebrow">Player Dashboard</span>
+            <span className="dashboard-eyebrow">
+              Player Dashboard
+            </span>
 
             <h1>
-              Welcome back, {user?.name || "Player"} 👋
+              Welcome back,{" "}
+              {user.name || "Player"} 👋
             </h1>
 
             <p>
-              Track your games, achievements, and overall Steam progress.
+              Track your games, achievements,
+              and overall Steam progress.
             </p>
           </div>
 
-          <Link className="dashboard-steam-btn" to="/profile">
+          <Link
+            className="dashboard-steam-btn"
+            to="/profile"
+          >
             <Link2 size={19} />
-            Connect Steam
+
+            {user.steamId
+              ? "Steam Connected"
+              : "Connect Steam"}
           </Link>
         </div>
+
+        {message && (
+          <div className="profile-page-message error">
+            {message}
+          </div>
+        )}
 
         <div className="dashboard-stats">
           <div className="dash-card">
             <Gamepad2 />
 
             <div>
-              <h3>24</h3>
+              <h3>{gamesTracked}</h3>
               <p>Games Tracked</p>
             </div>
           </div>
@@ -95,7 +164,7 @@ function Dashboard() {
             <Trophy />
 
             <div>
-              <h3>312</h3>
+              <h3>{totalAchievements}</h3>
               <p>Total Achievements</p>
             </div>
           </div>
@@ -104,7 +173,7 @@ function Dashboard() {
             <Sparkles />
 
             <div>
-              <h3>184</h3>
+              <h3>{achievementsUnlocked}</h3>
               <p>Achievements Unlocked</p>
             </div>
           </div>
@@ -112,115 +181,40 @@ function Dashboard() {
           <div className="dash-card">
             <BarChart3 />
 
-          <div>
-              <h3>59%</h3>
+            <div>
+              <h3>
+                {completionPercentage}%
+              </h3>
+
               <p>Overall Completion</p>
             </div>
           </div>
         </div>
 
-        <div className="dashboard-main-grid">
-          <section className="dashboard-panel recent-games-panel">
-            <div className="panel-header">
-              <div>
-                <span className="panel-eyebrow">
-                  Your Library
-                </span>
-
-                <h2>Recent Games</h2>
-              </div>
-
-              <Link to="/my-games">
-                View All
-              </Link>
-            </div>
-
-            <div className="dashboard-game-list">
-              {recentGames.map((game) => (
-                <div className="dashboard-game-row" key={game.name}>
-                  <img src={game.image} alt={game.name} />
-
-                  <div className="dashboard-game-info">
-                    <h3>{game.name}</h3>
-
-                    <div className="dashboard-game-meta">
-                      <span>{game.progress}% completed</span>
-
-                      <span>
-                        <Clock3 size={15} />
-                        {game.hours} hours
-                      </span>
-                    </div>
-
-                    <div className="dashboard-progress">
-                      <div
-                        style={{ width: `${game.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="dashboard-panel recent-achievements-panel">
-            <div className="panel-header">
-              <div>
-                <span className="panel-eyebrow">
-                  Latest Unlocks
-                </span>
-
-                <h2>Recent Achievements</h2>
-              </div>
-
-              <Link to="/achievements">
-                View All
-              </Link>
-            </div>
-
-            <div className="dashboard-achievement-list">
-              {recentAchievements.map((achievement) => {
-                const Icon = achievement.icon;
-
-                return (
-                  <div
-                    className="dashboard-achievement-row"
-                    key={achievement.title}
-                  >
-                    <div className="dashboard-achievement-icon">
-                      <Icon />
-                    </div>
-
-                    <div>
-                      <h3>{achievement.title}</h3>
-
-                      <p>{achievement.game}</p>
-
-                      <span>{achievement.time}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-
-        <section className="steam-connect-panel">
-          <div className="steam-connect-icon">
+        <section className="empty-data-card">
+          <div className="empty-data-icon">
             <Gamepad2 />
           </div>
 
-          <div>
-            <span>Steam Integration</span>
+          <span className="panel-eyebrow">
+            Steam data not imported
+          </span>
 
-            <h2>Connect your Steam profile</h2>
+          <h2>
+            Connect your Steam account
+          </h2>
 
-            <p>
-              Import your games, playtime, and achievements automatically.
-            </p>
-          </div>
+          <p>
+            Your recent games, achievements,
+            playtime, and activity will appear
+            here after Steam synchronization.
+          </p>
 
-          <Link to="/profile">
+          <Link
+            className="info-primary-button"
+            to="/profile"
+          >
+            <Link2 size={18} />
             Connect Steam
           </Link>
         </section>

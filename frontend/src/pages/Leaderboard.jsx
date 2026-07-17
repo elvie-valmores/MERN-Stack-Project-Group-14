@@ -1,7 +1,17 @@
-import { useMemo, useState } from "react";
-import Sidebar from "../components/Sidebar";
 import {
-  Award,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+
+import {
+  useNavigate
+} from "react-router-dom";
+
+import Sidebar from "../components/Sidebar";
+import PageLoading from "../components/PageLoading";
+
+import {
   Crown,
   Medal,
   Search,
@@ -9,97 +19,125 @@ import {
   Trophy
 } from "lucide-react";
 
-function Leaderboard() {
-  const [search, setSearch] = useState("");
-  const [period, setPeriod] = useState("All Time");
+import {
+  apiRequest,
+  clearUser,
+  getCurrentUser,
+  getToken
+} from "../services/api";
 
-  const players = [
-    {
-      id: 1,
-      name: "Alex",
-      initials: "A",
-      title: "Legend",
-      xp: 9820,
-      achievements: 246,
-      completion: 91,
-      change: "+320 XP"
-    },
-    {
-      id: 2,
-      name: "Moaaz",
-      initials: "M",
-      title: "Elite",
-      xp: 9440,
-      achievements: 231,
-      completion: 88,
-      change: "+280 XP",
-      currentUser: true
-    },
-    {
-      id: 3,
-      name: "Sarah",
-      initials: "S",
-      title: "Pro",
-      xp: 9130,
-      achievements: 219,
-      completion: 84,
-      change: "+245 XP"
-    },
-    {
-      id: 4,
-      name: "James",
-      initials: "J",
-      title: "Hunter",
-      xp: 8750,
-      achievements: 205,
-      completion: 80,
-      change: "+210 XP"
-    },
-    {
-      id: 5,
-      name: "Layla",
-      initials: "L",
-      title: "Explorer",
-      xp: 8420,
-      achievements: 194,
-      completion: 76,
-      change: "+190 XP"
-    },
-    {
-      id: 6,
-      name: "Daniel",
-      initials: "D",
-      title: "Challenger",
-      xp: 8010,
-      achievements: 182,
-      completion: 73,
-      change: "+165 XP"
-    },
-    {
-      id: 7,
-      name: "Emma",
-      initials: "E",
-      title: "Rising Star",
-      xp: 7640,
-      achievements: 171,
-      completion: 69,
-      change: "+150 XP"
-    }
-  ];
+function Leaderboard() {
+  const navigate = useNavigate();
+  const currentUser = getCurrentUser();
+
+  const [players, setPlayers] =
+    useState([]);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [message, setMessage] =
+    useState("");
+
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      if (!getToken()) {
+        clearUser();
+
+        navigate("/login", {
+          replace: true
+        });
+
+        return;
+      }
+
+      try {
+        const data = await apiRequest(
+          "/api/leaderboard"
+        );
+
+        setPlayers(
+          data.leaderboard || []
+        );
+      } catch (error) {
+        if (error.status === 401) {
+          clearUser();
+
+          navigate("/login", {
+            replace: true
+          });
+
+          return;
+        }
+
+        setMessage(
+          error.message ||
+            "Could not load leaderboard."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadLeaderboard();
+  }, [navigate]);
 
   const filteredPlayers = useMemo(() => {
+    const query =
+      search.trim().toLowerCase();
+
+    if (!query) {
+      return players;
+    }
+
     return players.filter((player) =>
-      player.name.toLowerCase().includes(search.toLowerCase())
+      player.name
+        .toLowerCase()
+        .includes(query)
     );
-  }, [search]);
+  }, [players, search]);
 
-  const topThree = players.slice(0, 3);
+  const topThree =
+    players.slice(0, 3);
 
-  const rankIcon = (rank) => {
-    if (rank === 1) return <Crown />;
-    if (rank === 2) return <Medal />;
-    if (rank === 3) return <Award />;
+  const totalXP = players.reduce(
+    (total, player) =>
+      total +
+      (player.achievementXP || 0),
+    0
+  );
+
+  const totalUnlocked = players.reduce(
+    (total, player) =>
+      total +
+      (player.achievementsUnlocked || 0),
+    0
+  );
+
+  const getRankIcon = (rank) => {
+    if (rank === 1) {
+      return <Crown />;
+    }
+
+    if (rank === 2 || rank === 3) {
+      return <Medal />;
+    }
+
     return <Trophy />;
+  };
+
+  const getInitials = (name) => {
+    return (
+      name
+        ?.split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || "P"
+    );
   };
 
   return (
@@ -116,162 +154,258 @@ function Leaderboard() {
             <h1>Leaderboard</h1>
 
             <p>
-              See how players rank based on achievement points and completion.
+              See how registered players rank
+              by achievement XP and completion.
             </p>
-          </div>
-
-          <div className="leaderboard-period">
-            {["Weekly", "All Time"].map((option) => (
-              <button
-                key={option}
-                className={period === option ? "active" : ""}
-                onClick={() => setPeriod(option)}
-              >
-                {option}
-              </button>
-            ))}
           </div>
         </div>
 
-        <section className="leaderboard-summary">
-          <div>
-            <Trophy />
-            <strong>{players.length}</strong>
-            <span>Ranked Players</span>
-          </div>
-
-          <div>
-            <Sparkles />
-            <strong>61,210</strong>
-            <span>Total XP Earned</span>
-          </div>
-
-          <div>
-            <Award />
-            <strong>1,448</strong>
-            <span>Achievements Unlocked</span>
-          </div>
-        </section>
-
-        <section className="leaderboard-podium">
-          {topThree.map((player, index) => {
-            const rank = index + 1;
-
-            return (
-              <article
-                className={`podium-card rank-${rank}`}
-                key={player.id}
-              >
-                <div className="podium-rank-icon">
-                  {rankIcon(rank)}
-                </div>
-
-                <span className="podium-position">
-                  #{rank}
-                </span>
-
-                <div className="player-avatar">
-                  {player.initials}
-                </div>
-
-                <h2>{player.name}</h2>
-                <p>{player.title}</p>
-
-                <strong>{player.xp.toLocaleString()} XP</strong>
-
-                <div className="podium-player-stats">
-                  <span>{player.achievements} achievements</span>
-                  <span>{player.completion}% complete</span>
-                </div>
-              </article>
-            );
-          })}
-        </section>
-
-        <section className="leaderboard-toolbar">
-          <div className="leaderboard-search">
-            <Search size={20} />
-
-            <input
-              type="text"
-              placeholder="Search players..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-
-          <span>
-            {period} Rankings
-          </span>
-        </section>
-
-        <section className="leaderboard-table-card">
-          <div className="leaderboard-table-header">
-            <span>Rank</span>
-            <span>Player</span>
-            <span>Achievements</span>
-            <span>Completion</span>
-            <span>Recent Gain</span>
-            <span>XP</span>
-          </div>
-
-          <div className="leaderboard-list">
-            {filteredPlayers.map((player, index) => (
-              <div
-                className={`leaderboard-player-row ${
-                  player.currentUser ? "current-user" : ""
-                }`}
-                key={player.id}
-              >
-                <div className="leaderboard-rank">
-                  {rankIcon(index + 1)}
-                  <strong>#{index + 1}</strong>
-                </div>
-
-                <div className="leaderboard-player">
-                  <div className="leaderboard-avatar">
-                    {player.initials}
-                  </div>
-
-                  <div>
-                    <h3>
-                      {player.name}
-                      {player.currentUser && (
-                        <span>You</span>
-                      )}
-                    </h3>
-
-                    <p>{player.title}</p>
-                  </div>
-                </div>
-
-                <strong className="leaderboard-value">
-                  {player.achievements}
-                </strong>
-
-                <div className="leaderboard-completion">
-                  <strong>{player.completion}%</strong>
-
-                  <div>
-                    <span
-                      style={{
-                        width: `${player.completion}%`
-                      }}
-                    ></span>
-                  </div>
-                </div>
-
-                <span className="leaderboard-change">
-                  {player.change}
-                </span>
-
-                <strong className="leaderboard-xp">
-                  {player.xp.toLocaleString()} XP
-                </strong>
+        {loading ? (
+          <PageLoading message="Loading leaderboard..." />
+        ) : (
+          <>
+            {message && (
+              <div className="profile-page-message error">
+                {message}
               </div>
-            ))}
-          </div>
-        </section>
+            )}
+
+            <div className="leaderboard-summary-grid">
+              <div className="dash-card">
+                <Trophy />
+
+                <div>
+                  <h3>{players.length}</h3>
+                  <p>Ranked Players</p>
+                </div>
+              </div>
+
+              <div className="dash-card">
+                <Sparkles />
+
+                <div>
+                  <h3>
+                    {totalXP.toLocaleString()}
+                  </h3>
+
+                  <p>Total XP Earned</p>
+                </div>
+              </div>
+
+              <div className="dash-card">
+                <Medal />
+
+                <div>
+                  <h3>
+                    {totalUnlocked.toLocaleString()}
+                  </h3>
+
+                  <p>
+                    Achievements Unlocked
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {topThree.length > 0 && (
+              <section className="leaderboard-podium">
+                {topThree.map((player) => (
+                  <article
+                    className={`podium-card rank-${player.rank}`}
+                    key={player._id}
+                  >
+                    <div className="podium-rank-icon">
+                      {getRankIcon(
+                        player.rank
+                      )}
+                    </div>
+
+                    <span className="podium-rank">
+                      #{player.rank}
+                    </span>
+
+                    {player.steamAvatar ? (
+                      <img
+                        className="podium-avatar"
+                        src={player.steamAvatar}
+                        alt={player.name}
+                      />
+                    ) : (
+                      <div className="podium-avatar">
+                        {getInitials(
+                          player.name
+                        )}
+                      </div>
+                    )}
+
+                    <h2>{player.name}</h2>
+
+                    <p>
+                      Level {player.level || 1}
+                    </p>
+
+                    <strong>
+                      {(
+                        player.achievementXP || 0
+                      ).toLocaleString()}{" "}
+                      XP
+                    </strong>
+
+                    <div className="podium-meta">
+                      <span>
+                        {player.achievementsUnlocked ||
+                          0}{" "}
+                        unlocked
+                      </span>
+
+                      <span>
+                        {player.completionPercentage ||
+                          0}
+                        % complete
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </section>
+            )}
+
+            <section className="leaderboard-search-panel">
+              <div className="leaderboard-search-box">
+                <Search />
+
+                <input
+                  type="text"
+                  placeholder="Search players..."
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <span>
+                All Time Rankings
+              </span>
+            </section>
+
+            {filteredPlayers.length === 0 ? (
+              <div className="leaderboard-empty-card">
+                No players found.
+              </div>
+            ) : (
+              <section className="leaderboard-table-card">
+                <div className="leaderboard-table-header">
+                  <span>Rank</span>
+                  <span>Player</span>
+                  <span>Achievements</span>
+                  <span>Completion</span>
+                  <span>Level</span>
+                  <span>XP</span>
+                </div>
+
+                {filteredPlayers.map(
+                  (player) => {
+                    const isCurrentUser =
+                      String(player._id) ===
+                      String(
+                        currentUser._id
+                      );
+
+                    return (
+                      <div
+                        className={`leaderboard-table-row ${
+                          isCurrentUser
+                            ? "current-player-row"
+                            : ""
+                        }`}
+                        key={player._id}
+                      >
+                        <div className="leaderboard-rank-cell">
+                          {getRankIcon(
+                            player.rank
+                          )}
+
+                          <strong>
+                            #{player.rank}
+                          </strong>
+                        </div>
+
+                        <div className="leaderboard-player-cell">
+                          {player.steamAvatar ? (
+                            <img
+                              src={
+                                player.steamAvatar
+                              }
+                              alt={
+                                player.name
+                              }
+                            />
+                          ) : (
+                            <div className="leaderboard-player-avatar">
+                              {getInitials(
+                                player.name
+                              )}
+                            </div>
+                          )}
+
+                          <div>
+                            <strong>
+                              {player.name}
+                            </strong>
+
+                            {isCurrentUser && (
+                              <span className="leaderboard-you-badge">
+                                You
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <strong>
+                          {player.achievementsUnlocked ||
+                            0}
+                        </strong>
+
+                        <div className="leaderboard-completion-cell">
+                          <strong>
+                            {player.completionPercentage ||
+                              0}
+                            %
+                          </strong>
+
+                          <div className="dashboard-progress">
+                            <div
+                              style={{
+                                width: `${
+                                  player.completionPercentage ||
+                                  0
+                                }%`
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        <strong>
+                          {player.level || 1}
+                        </strong>
+
+                        <strong className="leaderboard-xp">
+                          {(
+                            player.achievementXP ||
+                            0
+                          ).toLocaleString()}{" "}
+                          XP
+                        </strong>
+                      </div>
+                    );
+                  }
+                )}
+              </section>
+            )}
+          </>
+        )}
       </section>
     </main>
   );

@@ -3,12 +3,16 @@ node_modules/
 frontend/node_modules/
 api/node_modules/
 
-# Environment variables and secrets
+# Private environment variables
 .env
 .env.*
-!.env.example
-frontend/.env
 api/.env
+frontend/.env
+
+# Safe environment examples
+!.env.example
+!api/.env.example
+!frontend/.env.example
 
 # Build folders
 dist/
