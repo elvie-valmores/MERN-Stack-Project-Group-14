@@ -8,6 +8,9 @@ const {
   connectSteam,
   getSteamProfile,
   refreshSteamProfile,
+  syncOwnedGames,
+  getOwnedGames,
+  getGameDetails,
   disconnectSteam
 } = require(
   "../controllers/steamController"
@@ -31,6 +34,24 @@ router.put(
   "/refresh",
   protect,
   refreshSteamProfile
+);
+
+router.post(
+  "/games/sync",
+  protect,
+  syncOwnedGames
+);
+
+router.get(
+  "/games",
+  protect,
+  getOwnedGames
+);
+
+router.get(
+  "/games/:appId",
+  protect,
+  getGameDetails
 );
 
 router.delete(
