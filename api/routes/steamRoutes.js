@@ -1,16 +1,42 @@
 const express = require("express");
-const {
-    connectSteam,
-    getSteamProfile,
-    getOwnedGames
-} = require("../controllers/steamController");
 
-const protect = require("../middleware/authMiddleware");
+const protect = require(
+  "../middleware/authMiddleware"
+);
+
+const {
+  connectSteam,
+  getSteamProfile,
+  refreshSteamProfile,
+  disconnectSteam
+} = require(
+  "../controllers/steamController"
+);
 
 const router = express.Router();
 
-router.post("/connect", protect, connectSteam);
-router.get("/profile", protect, getSteamProfile);
-router.get("/games", protect, getOwnedGames);
+router.post(
+  "/connect",
+  protect,
+  connectSteam
+);
+
+router.get(
+  "/profile",
+  protect,
+  getSteamProfile
+);
+
+router.put(
+  "/refresh",
+  protect,
+  refreshSteamProfile
+);
+
+router.delete(
+  "/disconnect",
+  protect,
+  disconnectSteam
+);
 
 module.exports = router;

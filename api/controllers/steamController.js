@@ -1,175 +1,509 @@
 const User = require("../models/User");
 
-const steamRequest = async (endpoint, params = {}) => {
-    const apiKey = process.env.STEAM_API_KEY;
+const STEAM_API_BASE =
+  "https://api.steampowered.com";
 
-    if (!apiKey) {
-        throw new Error("STEAM_API_KEY is missing from api/.env");
-    }
+const isValidSteamId = (steamId) => {
+  return /^\d{17}$/.test(
+    String(steamId || "").trim()
+  );
+};
 
-    const query = new URLSearchParams({
-        key: apiKey,
-        format: "json",
-        ...params
-    });
+const getSteamApiKey = () => {
+  const apiKey = process.env.STEAM_API_KEY;
 
-    const response = await fetch(
-        `https://api.steampowered.com/${endpoint}?${query.toString()}`
+  if (!apiKey) {
+    const error = new Error(
+      "Steam API key is not configured."
     );
 
-    if (!response.ok) {
-        throw new Error(`Steam API request failed with status ${response.status}`);
-    }
+    error.status = 500;
+    throw error;
+  }
 
-    return response.json();
+  return apiKey;
+};
+
+const fetchJson = async (url) => {
+  let response;
+
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    const connectionError = new Error(
+      "Could not connect to Steam."
+    );
+
+    connectionError.status = 503;
+    throw connectionError;
+  }
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch (error) {
+    const responseError = new Error(
+      "Steam returned an invalid response."
+    );
+
+    responseError.status = 502;
+    throw responseError;
+  }
+
+  if (!response.ok) {
+    const steamError = new Error(
+      "Steam could not process the request."
+    );
+
+    steamError.status = response.status;
+    throw steamError;
+  }
+
+  return data;
+};
+
+const getSteamPlayer = async (steamId) => {
+  const apiKey = getSteamApiKey();
+
+  const url =
+    `${STEAM_API_BASE}` +
+    "/ISteamUser/GetPlayerSummaries/v2/" +
+    `?key=${encodeURIComponent(apiKey)}` +
+    `&steamids=${encodeURIComponent(steamId)}`;
+
+  const data = await fetchJson(url);
+
+  const players =
+    data?.response?.players || [];
+
+  if (players.length === 0) {
+    const error = new Error(
+      "Steam account was not found."
+    );
+
+    error.status = 404;
+    throw error;
+  }
+
+  return players[0];
+};
+
+const formatSteamData = (player) => {
+  return {
+    steamId:
+      player.steamid || "",
+
+    steamName:
+      player.personaname || "",
+
+    steamAvatar:
+      player.avatar || "",
+
+    steamAvatarMedium:
+      player.avatarmedium || "",
+
+    steamAvatarFull:
+      player.avatarfull || "",
+
+    steamProfileUrl:
+      player.profileurl || "",
+
+    steamVisibilityState:
+      player.personastate || 0,
+
+    steamCommunityVisibilityState:
+      player.communityvisibilitystate || 0,
+
+    steamLastLogoff:
+      player.lastlogoff
+        ? new Date(player.lastlogoff * 1000)
+        : null
+  };
 };
 
 const connectSteam = async (req, res) => {
-    try {
-        const steamId = String(req.body.steamId || "").trim();
+  try {
+    const steamId = String(
+      req.body.steamId || ""
+    ).trim();
 
-        if (!/^\d{17}$/.test(steamId)) {
-            return res.status(400).json({
-                message: "Enter a valid 17-digit Steam ID."
-            });
-        }
-
-        const data = await steamRequest(
-            "ISteamUser/GetPlayerSummaries/v2/",
-            {
-                steamids: steamId
-            }
-        );
-
-        const player = data?.response?.players?.[0];
-
-        if (!player) {
-            return res.status(404).json({
-                message: "Steam profile was not found."
-            });
-        }
-
-        const user = await User.findById(req.user._id);
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found."
-            });
-        }
-
-        user.steamId = player.steamid;
-        user.steamName = player.personaname || "";
-        user.steamAvatar = player.avatarfull || "";
-        user.steamProfileUrl = player.profileurl || "";
-
-        await user.save();
-
-        res.json({
-            message: "Steam account connected.",
-            steam: {
-                steamId: user.steamId,
-                steamName: user.steamName,
-                steamAvatar: user.steamAvatar,
-                steamProfileUrl: user.steamProfileUrl
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    if (!steamId) {
+      return res.status(400).json({
+        message: "Steam ID is required."
+      });
     }
+
+    if (!isValidSteamId(steamId)) {
+      return res.status(400).json({
+        message:
+          "Steam ID must contain exactly 17 numbers."
+      });
+    }
+
+    const existingUser =
+      await User.findOne({
+        steamId,
+        _id: {
+          $ne: req.user._id
+        }
+      });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message:
+          "This Steam account is already connected to another user."
+      });
+    }
+
+    const player =
+      await getSteamPlayer(steamId);
+
+    const steamData =
+      formatSteamData(player);
+
+    const user =
+      await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User was not found."
+      });
+    }
+
+    user.steamId =
+      steamData.steamId;
+
+    user.steamName =
+      steamData.steamName;
+
+    user.steamAvatar =
+      steamData.steamAvatar;
+
+    user.steamAvatarMedium =
+      steamData.steamAvatarMedium;
+
+    user.steamAvatarFull =
+      steamData.steamAvatarFull;
+
+    user.steamProfileUrl =
+      steamData.steamProfileUrl;
+
+    user.steamVisibilityState =
+      steamData.steamVisibilityState;
+
+    user.steamCommunityVisibilityState =
+      steamData.steamCommunityVisibilityState;
+
+    user.steamLastLogoff =
+      steamData.steamLastLogoff;
+
+    user.steamConnectedAt =
+      user.steamConnectedAt || new Date();
+
+    user.steamLastSyncedAt =
+      new Date();
+
+    await user.save();
+
+    return res.status(200).json({
+      message:
+        "Steam account connected successfully.",
+
+      steam: {
+        steamId:
+          user.steamId,
+
+        steamName:
+          user.steamName,
+
+        steamAvatar:
+          user.steamAvatar,
+
+        steamAvatarMedium:
+          user.steamAvatarMedium,
+
+        steamAvatarFull:
+          user.steamAvatarFull,
+
+        steamProfileUrl:
+          user.steamProfileUrl,
+
+        communityVisibilityState:
+          user.steamCommunityVisibilityState,
+
+        isPublic:
+          user.steamCommunityVisibilityState === 3,
+
+        connectedAt:
+          user.steamConnectedAt,
+
+        lastSyncedAt:
+          user.steamLastSyncedAt
+      }
+    });
+  } catch (error) {
+    console.error(
+      "Connect Steam error:",
+      error.message
+    );
+
+    return res
+      .status(error.status || 500)
+      .json({
+        message:
+          error.message ||
+          "Could not connect Steam account."
+      });
+  }
 };
 
-const getSteamProfile = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select("-password");
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found."
-            });
-        }
-
-        if (!user.steamId) {
-            return res.status(400).json({
-                message: "No Steam account is connected."
-            });
-        }
-
-        const data = await steamRequest(
-            "ISteamUser/GetPlayerSummaries/v2/",
-            {
-                steamids: user.steamId
-            }
+const getSteamProfile = async (
+  req,
+  res
+) => {
+  try {
+    const user =
+      await User.findById(req.user._id)
+        .select(
+          [
+            "steamId",
+            "steamName",
+            "steamAvatar",
+            "steamAvatarMedium",
+            "steamAvatarFull",
+            "steamProfileUrl",
+            "steamVisibilityState",
+            "steamCommunityVisibilityState",
+            "steamConnectedAt",
+            "steamLastSyncedAt"
+          ].join(" ")
         );
 
-        const player = data?.response?.players?.[0];
-
-        if (!player) {
-            return res.status(404).json({
-                message: "Steam profile was not found."
-            });
-        }
-
-        res.json({
-            steamId: player.steamid,
-            steamName: player.personaname,
-            steamAvatar: player.avatarfull,
-            steamProfileUrl: player.profileurl,
-            visibilityState: player.communityvisibilitystate
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    if (!user) {
+      return res.status(404).json({
+        message: "User was not found."
+      });
     }
+
+    if (!user.steamId) {
+      return res.status(404).json({
+        message:
+          "No Steam account is connected."
+      });
+    }
+
+    return res.status(200).json({
+      steam: {
+        steamId:
+          user.steamId,
+
+        steamName:
+          user.steamName,
+
+        steamAvatar:
+          user.steamAvatar,
+
+        steamAvatarMedium:
+          user.steamAvatarMedium,
+
+        steamAvatarFull:
+          user.steamAvatarFull,
+
+        steamProfileUrl:
+          user.steamProfileUrl,
+
+        communityVisibilityState:
+          user.steamCommunityVisibilityState,
+
+        isPublic:
+          user.steamCommunityVisibilityState === 3,
+
+        connectedAt:
+          user.steamConnectedAt,
+
+        lastSyncedAt:
+          user.steamLastSyncedAt
+      }
+    });
+  } catch (error) {
+    console.error(
+      "Get Steam profile error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      message:
+        "Could not load Steam profile."
+    });
+  }
 };
 
-const getOwnedGames = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select("-password");
+const refreshSteamProfile = async (
+  req,
+  res
+) => {
+  try {
+    const user =
+      await User.findById(req.user._id);
 
-        if (!user?.steamId) {
-            return res.status(400).json({
-                message: "Connect a Steam account first."
-            });
-        }
-
-        const data = await steamRequest(
-            "IPlayerService/GetOwnedGames/v1/",
-            {
-                steamid: user.steamId,
-                include_appinfo: "true",
-                include_played_free_games: "true"
-            }
-        );
-
-        const games = data?.response?.games || [];
-
-        const formattedGames = games.map((game) => ({
-            appId: game.appid,
-            name: game.name,
-            playtimeMinutes: game.playtime_forever || 0,
-            playtimeHours: Math.round((game.playtime_forever || 0) / 60),
-            iconUrl: game.img_icon_url
-                ? `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`
-                : "",
-            headerImage: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`
-        }));
-
-        res.json({
-            gameCount: formattedGames.length,
-            games: formattedGames
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    if (!user) {
+      return res.status(404).json({
+        message: "User was not found."
+      });
     }
+
+    if (!user.steamId) {
+      return res.status(400).json({
+        message:
+          "Connect a Steam account first."
+      });
+    }
+
+    const player =
+      await getSteamPlayer(
+        user.steamId
+      );
+
+    const steamData =
+      formatSteamData(player);
+
+    user.steamName =
+      steamData.steamName;
+
+    user.steamAvatar =
+      steamData.steamAvatar;
+
+    user.steamAvatarMedium =
+      steamData.steamAvatarMedium;
+
+    user.steamAvatarFull =
+      steamData.steamAvatarFull;
+
+    user.steamProfileUrl =
+      steamData.steamProfileUrl;
+
+    user.steamVisibilityState =
+      steamData.steamVisibilityState;
+
+    user.steamCommunityVisibilityState =
+      steamData.steamCommunityVisibilityState;
+
+    user.steamLastLogoff =
+      steamData.steamLastLogoff;
+
+    user.steamLastSyncedAt =
+      new Date();
+
+    await user.save();
+
+    return res.status(200).json({
+      message:
+        "Steam profile refreshed successfully.",
+
+      steam: {
+        steamId:
+          user.steamId,
+
+        steamName:
+          user.steamName,
+
+        steamAvatar:
+          user.steamAvatar,
+
+        steamAvatarMedium:
+          user.steamAvatarMedium,
+
+        steamAvatarFull:
+          user.steamAvatarFull,
+
+        steamProfileUrl:
+          user.steamProfileUrl,
+
+        communityVisibilityState:
+          user.steamCommunityVisibilityState,
+
+        isPublic:
+          user.steamCommunityVisibilityState === 3,
+
+        connectedAt:
+          user.steamConnectedAt,
+
+        lastSyncedAt:
+          user.steamLastSyncedAt
+      }
+    });
+  } catch (error) {
+    console.error(
+      "Refresh Steam profile error:",
+      error.message
+    );
+
+    return res
+      .status(error.status || 500)
+      .json({
+        message:
+          error.message ||
+          "Could not refresh Steam profile."
+      });
+  }
+};
+
+const disconnectSteam = async (
+  req,
+  res
+) => {
+  try {
+    const user =
+      await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User was not found."
+      });
+    }
+
+    user.steamId = "";
+    user.steamName = "";
+    user.steamAvatar = "";
+    user.steamAvatarMedium = "";
+    user.steamAvatarFull = "";
+    user.steamProfileUrl = "";
+    user.steamVisibilityState = 0;
+    user.steamCommunityVisibilityState = 0;
+    user.steamLastLogoff = null;
+    user.steamConnectedAt = null;
+    user.steamLastSyncedAt = null;
+
+    user.gamesTracked = 0;
+    user.totalAchievements = 0;
+    user.achievementsUnlocked = 0;
+    user.achievementXP = 0;
+    user.level = 1;
+    user.completionPercentage = 0;
+
+    await user.save();
+
+    return res.status(200).json({
+      message:
+        "Steam account disconnected successfully."
+    });
+  } catch (error) {
+    console.error(
+      "Disconnect Steam error:",
+      error.message
+    );
+
+    return res.status(500).json({
+      message:
+        "Could not disconnect Steam account."
+    });
+  }
 };
 
 module.exports = {
-    connectSteam,
-    getSteamProfile,
-    getOwnedGames
+  connectSteam,
+  getSteamProfile,
+  refreshSteamProfile,
+  disconnectSteam
 };
