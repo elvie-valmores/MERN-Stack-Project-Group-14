@@ -168,51 +168,6 @@ const getOwnedGames = async (req, res) => {
     }
 };
 
-const getOwnedGames = async (req, res) => {
-    try {
-        const user = await User.findById(req.user._id).select("-password");
-
-        if (!user?.steamId) {
-            return res.status(400).json({
-                message: "Connect a Steam account first."
-            });
-        }
-
-        const data = await steamRequest(
-            "IPlayerService/GetOwnedGames/v1/",
-            {
-                steamid: user.steamId,
-                include_appinfo: "true",
-                include_played_free_games: "true"
-            }
-        );
-
-        const games = data?.response?.games || [];
-
-        const formattedGames = games.map((game) => ({
-            appId: game.appid,
-            name: game.name,
-            playtimeMinutes: game.playtime_forever || 0,
-            playtimeHours: Math.round(
-                (game.playtime_forever || 0) / 60
-            ),
-            iconUrl: game.img_icon_url
-                ? `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`
-                : "",
-            headerImage:
-                `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`
-        }));
-
-        res.json({
-            gameCount: formattedGames.length,
-            games: formattedGames
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
 
 const getGameAchievements = async (req, res) => {
     try {
