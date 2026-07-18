@@ -168,8 +168,176 @@ const getOwnedGames = async (req, res) => {
     }
 };
 
+const getOwnedGames = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("-password");
+
+        if (!user?.steamId) {
+            return res.status(400).json({
+                message: "Connect a Steam account first."
+            });
+        }
+
+        const data = await steamRequest(
+            "IPlayerService/GetOwnedGames/v1/",
+            {
+                steamid: user.steamId,
+                include_appinfo: "true",
+                include_played_free_games: "true"
+            }
+        );
+
+        const games = data?.response?.games || [];
+
+        const formattedGames = games.map((game) => ({
+            appId: game.appid,
+            name: game.name,
+            playtimeMinutes: game.playtime_forever || 0,
+            playtimeHours: Math.round(
+                (game.playtime_forever || 0) / 60
+            ),
+            iconUrl: game.img_icon_url
+                ? `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`
+                : "",
+            headerImage:
+                `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`
+        }));
+
+        res.json({
+            gameCount: formattedGames.length,
+            games: formattedGames
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+};
+
+const getGameAchievements = async (req, res) => {
+    try {
+        const appId = String(req.params.appId || "").trim();
+
+        if (!/^\d+$/.test(appId)) {
+            return res.status(400).json({
+                message: "Enter a valid numeric Steam App ID."
+            });
+        }
+
+        const user = await User.findById(req.user._id).select("-password");
+
+        if (!user?.steamId) {
+            return res.status(400).json({
+                message: "Connect a Steam account first."
+            });
+        }
+
+        const [playerData, schemaData] = await Promise.all([
+            steamRequest(
+                "ISteamUserStats/GetPlayerAchievements/v1/",
+                {
+                    steamid: user.steamId,
+                    appid: appId,
+                    l: "english"
+                }
+            ),
+            steamRequest(
+                "ISteamUserStats/GetSchemaForGame/v2/",
+                {
+                    appid: appId,
+                    l: "english"
+                }
+            )
+        ]);
+
+        const playerStats = playerData?.playerstats;
+
+        if (!playerStats?.success) {
+            return res.status(404).json({
+                message:
+                    "Achievements were not available for this game."
+            });
+        }
+
+        const playerAchievements =
+            playerStats.achievements || [];
+
+        const schemaAchievements =
+            schemaData?.game?.availableGameStats?.achievements || [];
+
+        const schemaByName = new Map(
+            schemaAchievements.map((achievement) => [
+                achievement.name,
+                achievement
+            ])
+        );
+
+        const achievements = playerAchievements.map(
+            (achievement) => {
+                const schema = schemaByName.get(
+                    achievement.apiname
+                );
+
+                return {
+                    apiName: achievement.apiname,
+                    name:
+                        achievement.name ||
+                        schema?.displayName ||
+                        achievement.apiname,
+                    description:
+                        achievement.description ||
+                        schema?.description ||
+                        "",
+                    achieved: achievement.achieved === 1,
+                    unlockTime:
+                        achievement.unlocktime > 0
+                            ? new Date(
+                                achievement.unlocktime * 1000
+                            ).toISOString()
+                            : null,
+                    icon: schema?.icon || "",
+                    iconGray: schema?.icongray || ""
+                };
+            }
+        );
+
+        const unlocked = achievements.filter(
+            (achievement) => achievement.achieved
+        ).length;
+
+        const total = achievements.length;
+        const locked = total - unlocked;
+        const completionPercentage =
+            total === 0
+                ? 0
+                : Math.round((unlocked / total) * 100);
+
+        res.json({
+            steamId: user.steamId,
+            appId: Number(appId),
+            gameName:
+                playerStats.gameName ||
+                schemaData?.game?.gameName ||
+                "",
+            summary: {
+                unlocked,
+                locked,
+                total,
+                completionPercentage
+            },
+            achievements
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+};
+
 module.exports = {
     connectSteam,
     getSteamProfile,
-    getOwnedGames
+    getOwnedGames,
+    getGameAchievements
 };
+
