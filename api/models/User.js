@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 80
+      maxlength: 80,
     },
 
     email: {
@@ -14,115 +14,144 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      trim: true
+      trim: true,
     },
 
     password: {
       type: String,
-      required: true,
-      minlength: 8
+      required: function () {
+        return this.authProvider === "local";
+      },
+      minlength: 8,
+    },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    verificationToken: {
+      type: String,
+      default: "",
+    },
+
+    verificationTokenExpires: {
+      type: Date,
+      default: null,
     },
 
     avatar: {
       type: String,
-      default: ""
+      default: "",
     },
 
     steamId: {
       type: String,
       default: "",
-      trim: true
+      trim: true,
     },
 
     steamName: {
       type: String,
-      default: ""
+      default: "",
     },
 
     steamAvatar: {
       type: String,
-      default: ""
+      default: "",
     },
 
     steamAvatarMedium: {
       type: String,
-      default: ""
+      default: "",
     },
 
     steamAvatarFull: {
       type: String,
-      default: ""
+      default: "",
     },
 
     steamProfileUrl: {
       type: String,
-      default: ""
+      default: "",
     },
 
     steamVisibilityState: {
       type: Number,
-      default: 0
+      default: 0,
     },
 
     steamCommunityVisibilityState: {
       type: Number,
-      default: 0
+      default: 0,
     },
 
     steamLastLogoff: {
       type: Date,
-      default: null
+      default: null,
     },
 
     steamConnectedAt: {
       type: Date,
-      default: null
+      default: null,
     },
 
     steamLastSyncedAt: {
       type: Date,
-      default: null
+      default: null,
     },
 
     gamesTracked: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
 
     totalAchievements: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
 
     achievementsUnlocked: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
 
     achievementXP: {
       type: Number,
       default: 0,
-      min: 0
+      min: 0,
     },
 
     level: {
       type: Number,
       default: 1,
-      min: 1
+      min: 1,
     },
 
     completionPercentage: {
       type: Number,
       default: 0,
       min: 0,
-      max: 100
-    }
+      max: 100,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
