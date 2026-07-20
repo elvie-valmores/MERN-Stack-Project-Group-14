@@ -1,28 +1,26 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 const sendEmail = async ({ to, subject, html }) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error(
-      "EMAIL_USER or EMAIL_PASS is missing from the .env file."
-    );
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is missing from the .env file.");
   }
 
-  const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
-  await transporter.sendMail({
+  const { data, error } = await resend.emails.send({
     from:
       process.env.EMAIL_FROM ||
-      `"Achievement Hub" <${process.env.EMAIL_USER}>`,
+      "Achievement Hub <noreply@send.achievementhub.org>",
     to,
     subject,
-    html,
+    html
   });
+
+  if (error) {
+    throw new Error(error.message || "Failed to send email.");
+  }
+
+  return data;
 };
 
 module.exports = sendEmail;
