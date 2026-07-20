@@ -327,6 +327,23 @@ const connectSteam = async (
       });
     }
 
+    const steamIdChanged =
+      user.steamId &&
+      user.steamId !== steamData.steamId;
+
+    if (steamIdChanged) {
+      await SteamGame.deleteMany({
+        userId: user._id
+      });
+
+      user.totalGames = 0;
+      user.totalAchievements = 0;
+      user.unlockedAchievements = 0;
+      user.achievementXp = 0;
+      user.level = 1;
+      user.completionPercentage = 0;
+    }
+
     user.steamId =
       steamData.steamId;
 
