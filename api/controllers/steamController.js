@@ -401,10 +401,12 @@ const connectSteam = async (
       }
     });
   } catch (error) {
-    console.error(
-      "Connect Steam error:",
-      error.message
-    );
+    console.error("========== STEAM ERROR ==========");
+    console.error("Status:", error.response?.status);
+    console.error("Response:", error.response?.data);
+    console.error("Message:", error.message);
+    console.error("Stack:", error.stack);
+    console.error("=================================");
 
     return res
       .status(error.status || 500)
