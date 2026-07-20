@@ -2,7 +2,16 @@ const User = require("../models/User");
 
 const getLeaderboard = async (req, res) => {
     try {
-        const users = await User.find({})
+        const users = await User.find({
+      steamId: {
+        $exists: true,
+        $ne: ""
+      },
+      steamLastSyncedAt: {
+        $exists: true,
+        $ne: null
+      }
+    })
             .select(
                 "name achievementXP achievementsUnlocked totalAchievements completionPercentage level steamAvatar"
             )
