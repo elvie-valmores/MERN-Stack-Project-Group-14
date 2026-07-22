@@ -151,7 +151,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>12,540</h3>
+            <p className="stat-number">12,540</p>
             <p>Users</p>
           </div>
         </div>
@@ -162,7 +162,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>8,230</h3>
+            <p className="stat-number">8,230</p>
             <p>Games Tracked</p>
           </div>
         </div>
@@ -173,7 +173,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>125,000+</h3>
+            <p className="stat-number">125,000+</p>
             <p>Achievements</p>
           </div>
         </div>
@@ -184,7 +184,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>98,760</h3>
+            <p className="stat-number">98,760</p>
             <p>Unlocked</p>
           </div>
         </div>
