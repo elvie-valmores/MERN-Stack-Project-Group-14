@@ -10,7 +10,7 @@ import {
   BarChart3
 } from "lucide-react";
 
-import controllerImg from "../assets/images/controller.png";
+import controllerImg from "../assets/images/controller-small.png";
 import achievementLogo from "../assets/images/223-cropped.png";
 
 function Home() {
