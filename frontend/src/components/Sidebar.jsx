@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import achievementLogo from "../assets/images/223-cropped.png";
+import achievementLogo from "../assets/images/223-cropped.webp";
 
 function Sidebar() {
   const navigate = useNavigate();

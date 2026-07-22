@@ -11,7 +11,7 @@ import {
   Trophy,
   User
 } from "lucide-react";
-import achievementLogo from "../assets/images/223-cropped.png";
+import achievementLogo from "../assets/images/223-cropped.webp";
 
 function Register() {
   const navigate = useNavigate();

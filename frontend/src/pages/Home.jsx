@@ -10,8 +10,8 @@ import {
   BarChart3
 } from "lucide-react";
 
-import controllerImg from "../assets/images/controller.png";
-import achievementLogo from "../assets/images/223-cropped.png";
+import controllerImg from "../assets/images/controller.webp";
+import achievementLogo from "../assets/images/223-cropped.webp";
 
 function Home() {
   const storedUser = JSON.parse(
@@ -138,8 +138,10 @@ function Home() {
           <div className="portal"></div>
 
           <img
-            src={controllerImg}
-            alt="Glowing gaming controller"
+              src={controllerImg}
+              alt="Glowing gaming controller"
+              fetchPriority="high"
+              decoding="async"
           />
         </div>
       </section>

@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Trophy
 } from "lucide-react";
-import achievementLogo from "../assets/images/223-cropped.png";
+import achievementLogo from "../assets/images/223-cropped.webp";
 
 function Login() {
   const navigate = useNavigate();
