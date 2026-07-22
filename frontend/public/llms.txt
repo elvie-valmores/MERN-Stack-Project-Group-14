@@ -1,0 +1,12 @@
+# Achievement Hub
+
+Achievement Hub is a web application that lets users connect their Steam account, track games, achievements, completion progress, and leaderboard rankings.
+
+## Main pages
+
+- [Home](https://achievementhub.org/)
+- [Register](https://achievementhub.org/register)
+- [Login](https://achievementhub.org/login)
+- [Leaderboard](https://achievementhub.org/leaderboard)
+- [Privacy Policy](https://achievementhub.org/privacy)
+- [Terms of Service](https://achievementhub.org/terms)
