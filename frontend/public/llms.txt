@@ -1,28 +1,70 @@
 # Achievement Hub
 
-> Achievement Hub is a web application that helps Steam players track game achievements, monitor completion progress, and compare statistics with other users.
+> Achievement Hub is a Steam achievement-tracking application that lets users connect a public Steam account, synchronize owned games, view achievement progress, monitor completion statistics, and compare their progress with other registered users.
 
-Achievement Hub is built using the MERN stack (MongoDB, Express, React, Node.js). Users connect a public Steam profile and synchronize their game library using the Steam Web API.
+## Public pages
 
-## Features
-- User registration and authentication
-- Steam account linking
-- Steam library synchronization
-- Achievement synchronization
-- Individual game progress
-- Completion percentage tracking
-- User dashboard
+- [Home](https://achievementhub.org/): Overview of Achievement Hub and its Steam achievement-tracking features.
+- [About](https://achievementhub.org/about): Information about the project and its purpose.
+- [Connect Steam](https://achievementhub.org/connect-steam): Instructions for connecting a public Steam account.
+- [Help Center](https://achievementhub.org/help): Help with accounts, Steam profiles, synchronization, and achievements.
+- [Contact](https://achievementhub.org/contact): Contact form for questions and support.
+- [Privacy Policy](https://achievementhub.org/privacy): Information about data collection and use.
+- [Terms of Use](https://achievementhub.org/terms): Terms and conditions for using Achievement Hub.
+- [Log In](https://achievementhub.org/login): Sign in to an Achievement Hub account.
+- [Register](https://achievementhub.org/register): Create an Achievement Hub account.
+
+## Authenticated features
+
+The following areas require an Achievement Hub account and are not intended as public documentation pages:
+
+- Dashboard
+- Profile management
+- My Games
+- Achievement progress
 - Community leaderboard
+- Individual game achievement pages
 
-## Data Sources
-- Steam Web API
-- Public Steam Community profiles
+## Core features
+
+- Achievement Hub account registration and JWT-based authentication
+- Connection to a public Steam profile using a Steam ID
+- Steam library synchronization
+- Owned-game and playtime display
+- Achievement status and unlock-date tracking
+- Game completion percentages
+- User profiles and achievement statistics
+- Registered-user leaderboard
+
+## Steam data
+
+Achievement Hub uses the Steam Web API to retrieve publicly available information, which may include:
+
+- Steam display name and avatar
+- Public Steam profile URL
+- Owned games
+- Game playtime
+- Achievement names and descriptions
+- Locked and unlocked achievement states
+- Achievement unlock dates
+
+Steam passwords are never requested or stored. Steam profile and game-detail visibility must be public for synchronization to work. Some games do not expose achievement information through the Steam Web API.
 
 ## Technology
-- MongoDB
-- Express
-- React
-- Node.js
-- JWT authentication
 
-Achievement Hub is an independent project and is not affiliated with Valve Corporation.
+Achievement Hub uses the MERN stack:
+
+- MongoDB and Mongoose
+- Express
+- React with Vite
+- Node.js
+- JSON Web Token authentication
+
+## Data ownership and affiliation
+
+Steam, Steam Community, game names, artwork, and achievement information belong to Valve Corporation and their respective publishers. Achievement Hub is an independent project and is not affiliated with or endorsed by Valve Corporation.
+
+## Additional links
+
+- [Steam](https://store.steampowered.com/)
+- [Steam Community](https://steamcommunity.com/)
