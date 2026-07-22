@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import achievementLogo from "../assets/images/223-cropped.png";
+import achievementLogo from "../assets/images/223-cropped.webp";
 
 function InfoPageLayout({
   eyebrow,
