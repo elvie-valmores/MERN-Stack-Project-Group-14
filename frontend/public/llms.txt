@@ -1,0 +1,28 @@
+# Achievement Hub
+
+> Achievement Hub is a web application that helps Steam players track game achievements, monitor completion progress, and compare statistics with other users.
+
+Achievement Hub is built using the MERN stack (MongoDB, Express, React, Node.js). Users connect a public Steam profile and synchronize their game library using the Steam Web API.
+
+## Features
+- User registration and authentication
+- Steam account linking
+- Steam library synchronization
+- Achievement synchronization
+- Individual game progress
+- Completion percentage tracking
+- User dashboard
+- Community leaderboard
+
+## Data Sources
+- Steam Web API
+- Public Steam Community profiles
+
+## Technology
+- MongoDB
+- Express
+- React
+- Node.js
+- JWT authentication
+
+Achievement Hub is an independent project and is not affiliated with Valve Corporation.
