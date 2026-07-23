@@ -74,7 +74,7 @@ jobs:
       - backend-tests
       - frontend-build
 
-    if: github.event_name == 'push' && github.ref == 'refs/heads/steam-integration'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Configure SSH
@@ -92,9 +92,9 @@ jobs:
 
           cd /var/www/achievement-hub
 
-          git fetch origin steam-integration
-          git checkout steam-integration
-          git reset --hard origin/steam-integration
+          git fetch origin main
+          git checkout main
+          git reset --hard origin/main
 
           cd api
           npm ci --omit=dev
