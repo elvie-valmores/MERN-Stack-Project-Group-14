@@ -1,0 +1,664 @@
+.live-dashboard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.live-dashboard-heading h1 {
+  margin: 8px 0 10px;
+}
+
+.live-dashboard-heading p {
+  margin: 0;
+  color: #aaa6b8;
+  line-height: 1.6;
+}
+
+.dashboard-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-sync-all-button,
+.dashboard-connect-button {
+  min-height: 46px;
+  padding: 0 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.48);
+
+  border-radius: 12px;
+
+  background:
+    rgba(168, 85, 247, 0.16);
+
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-sync-all-button:hover,
+.dashboard-connect-button:hover {
+  background:
+    rgba(168, 85, 247, 0.26);
+}
+
+.dashboard-sync-all-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.dashboard-sync-spin {
+  animation:
+    dashboard-sync-rotation
+    0.8s linear infinite;
+}
+
+@keyframes dashboard-sync-rotation {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dashboard-steam-status {
+  margin-top: 25px;
+  padding: 20px 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+
+  border: 1px solid
+    rgba(34, 197, 94, 0.28);
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(18, 40, 36, 0.55),
+      rgba(10, 18, 25, 0.94)
+    );
+}
+
+.dashboard-steam-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-steam-user img,
+.dashboard-steam-avatar-fallback {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+
+  border-radius: 15px;
+
+  border: 2px solid
+    rgba(34, 197, 94, 0.4);
+}
+
+.dashboard-steam-user img {
+  display: block;
+  object-fit: cover;
+}
+
+.dashboard-steam-avatar-fallback {
+  display: grid;
+  place-items: center;
+
+  background:
+    rgba(34, 197, 94, 0.1);
+
+  color: #86efac;
+}
+
+.dashboard-steam-user span {
+  color: #86efac;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.dashboard-steam-user h2 {
+  margin: 4px 0;
+  font-size: 1.15rem;
+}
+
+.dashboard-steam-user p {
+  margin: 0;
+  color: #aaa6b8;
+  font-size: 0.8rem;
+}
+
+.dashboard-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.dashboard-sync-status > svg {
+  color: #86efac;
+}
+
+.dashboard-sync-status strong,
+.dashboard-sync-status span {
+  display: block;
+}
+
+.dashboard-sync-status strong {
+  font-size: 0.84rem;
+}
+
+.dashboard-sync-status span {
+  margin-top: 4px;
+  color: #aaa6b8;
+  font-size: 0.76rem;
+}
+
+.dashboard-live-stats {
+  margin-top: 22px;
+
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.dashboard-live-stats article {
+  padding: 21px;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.27);
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(24, 21, 46, 0.96),
+      rgba(10, 10, 26, 0.95)
+    );
+}
+
+.dashboard-stat-icon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 13px;
+  background:
+    rgba(168, 85, 247, 0.14);
+
+  color: #a855f7;
+}
+
+.dashboard-live-stats strong {
+  display: block;
+  font-size: 1.5rem;
+}
+
+.dashboard-live-stats span {
+  display: block;
+  margin-top: 3px;
+
+  color: #aaa6b8;
+  font-size: 0.82rem;
+}
+
+.dashboard-empty-state {
+  margin-top: 25px;
+}
+
+.dashboard-progress-section {
+  margin-top: 22px;
+  padding: 22px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.27);
+
+  border-radius: 18px;
+
+  background:
+    rgba(15, 14, 31, 0.92);
+}
+
+.dashboard-progress-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.dashboard-progress-heading h2 {
+  margin: 6px 0 0;
+}
+
+.dashboard-progress-heading > strong {
+  color: #c084fc;
+}
+
+.dashboard-large-progress {
+  height: 11px;
+  margin-top: 17px;
+
+  overflow: hidden;
+  border-radius: 999px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-large-progress div {
+  height: 100%;
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      #7e22ce,
+      #a855f7
+    );
+}
+
+.dashboard-progress-details {
+  margin-top: 15px;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.dashboard-progress-details span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #aaa6b8;
+  font-size: 0.82rem;
+}
+
+.dashboard-progress-details svg {
+  color: #a855f7;
+}
+
+.dashboard-live-grid {
+  margin-top: 22px;
+
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 20px;
+}
+
+.dashboard-live-panel {
+  padding: 22px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.27);
+
+  border-radius: 19px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(23, 20, 43, 0.97),
+      rgba(9, 9, 24, 0.96)
+    );
+}
+
+.dashboard-panel-heading {
+  margin-bottom: 18px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-panel-heading h2 {
+  margin: 6px 0 0;
+  font-size: 1.2rem;
+}
+
+.dashboard-panel-heading > a {
+  color: #c084fc;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dashboard-panel-empty {
+  min-height: 180px;
+
+  display: grid;
+  place-items: center;
+
+  color: #817d91;
+  text-align: center;
+}
+
+.dashboard-recent-games,
+.dashboard-recent-achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.dashboard-recent-game {
+  padding: 11px;
+
+  display: grid;
+  grid-template-columns:
+    74px minmax(0, 1fr) auto;
+
+  align-items: center;
+  gap: 13px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.18);
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+
+  color: #ffffff;
+}
+
+.dashboard-recent-game:hover {
+  border-color:
+    rgba(168, 85, 247, 0.48);
+
+  background:
+    rgba(168, 85, 247, 0.08);
+}
+
+.dashboard-game-image {
+  width: 74px;
+  height: 45px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+  border-radius: 8px;
+
+  background: #111023;
+  color: #a855f7;
+}
+
+.dashboard-game-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+  object-fit: cover;
+}
+
+.dashboard-game-info {
+  min-width: 0;
+}
+
+.dashboard-game-info h3 {
+  overflow: hidden;
+  margin: 0;
+
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-game-info span {
+  margin-top: 5px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: #817d91;
+  font-size: 0.73rem;
+}
+
+.dashboard-recent-game > strong {
+  color: #c084fc;
+  font-size: 0.86rem;
+}
+
+.dashboard-achievement-item {
+  padding: 11px;
+
+  display: grid;
+  grid-template-columns:
+    52px minmax(0, 1fr) auto;
+
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.18);
+
+  border-radius: 13px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+}
+
+.dashboard-achievement-icon {
+  width: 52px;
+  height: 52px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+  border-radius: 10px;
+
+  background:
+    rgba(168, 85, 247, 0.12);
+
+  color: #a855f7;
+}
+
+.dashboard-achievement-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-achievement-item h3 {
+  overflow: hidden;
+  margin: 0;
+
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-achievement-item span {
+  display: block;
+  margin-top: 4px;
+
+  color: #aaa6b8;
+  font-size: 0.72rem;
+}
+
+.dashboard-achievement-item p {
+  margin: 3px 0 0;
+
+  color: #817d91;
+  font-size: 0.68rem;
+}
+
+.dashboard-achievement-item > strong {
+  color: #c084fc;
+  font-size: 0.78rem;
+}
+
+.dashboard-most-played-panel {
+  margin-top: 20px;
+}
+
+.dashboard-most-played-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 13px;
+}
+
+.dashboard-most-played-card {
+  padding: 12px;
+
+  display: grid;
+  grid-template-columns:
+    90px minmax(0, 1fr) auto;
+
+  align-items: center;
+  gap: 13px;
+
+  border: 1px solid
+    rgba(168, 85, 247, 0.18);
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.025);
+}
+
+.dashboard-most-played-image {
+  width: 90px;
+  height: 54px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+  border-radius: 9px;
+
+  background: #111023;
+  color: #a855f7;
+}
+
+.dashboard-most-played-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-most-played-card h3 {
+  overflow: hidden;
+  margin: 0;
+
+  font-size: 0.87rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-most-played-card span {
+  display: block;
+  margin-top: 5px;
+
+  color: #817d91;
+  font-size: 0.74rem;
+}
+
+.dashboard-game-links {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.dashboard-game-links a {
+  color: #c084fc;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+@media (max-width: 1150px) {
+  .dashboard-live-stats {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-live-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .live-dashboard-heading,
+  .dashboard-steam-status {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-sync-all-button,
+  .dashboard-connect-button {
+    width: 100%;
+  }
+
+  .dashboard-most-played-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .dashboard-live-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-progress-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-recent-game {
+    grid-template-columns:
+      65px minmax(0, 1fr);
+  }
+
+  .dashboard-recent-game > strong {
+    grid-column: 2;
+  }
+
+  .dashboard-achievement-item {
+    grid-template-columns:
+      48px minmax(0, 1fr);
+  }
+
+  .dashboard-achievement-item > strong {
+    grid-column: 2;
+  }
+
+  .dashboard-most-played-card {
+    grid-template-columns:
+      75px minmax(0, 1fr);
+  }
+
+  .dashboard-most-played-image {
+    width: 75px;
+    height: 47px;
+  }
+
+  .dashboard-game-links {
+    grid-column: 2;
+  }
+}

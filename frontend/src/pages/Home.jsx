@@ -10,8 +10,11 @@ import {
   BarChart3
 } from "lucide-react";
 
-import controllerImg from "../assets/images/controller.webp";
-import achievementLogo from "../assets/images/223-cropped.webp";
+import controllerImg from "../assets/images/controller-optimized.webp";
+import achievementLogo from "../assets/images/223-cropped-optimized.webp";
+import cs2Image from "../assets/images/counter-strike-2.webp";
+import rdr2Image from "../assets/images/red-dead-redemption-2.webp";
+import eldenRingImage from "../assets/images/elden-ring.webp";
 
 function Home() {
   const storedUser = JSON.parse(
@@ -138,10 +141,8 @@ function Home() {
           <div className="portal"></div>
 
           <img
-              src={controllerImg}
-              alt="Glowing gaming controller"
-              fetchPriority="high"
-              decoding="async"
+            src={controllerImg}
+            alt="Glowing gaming controller"
           />
         </div>
       </section>
@@ -153,7 +154,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>12,540</h3>
+            <p className="stat-number">12,540</p>
             <p>Users</p>
           </div>
         </div>
@@ -164,7 +165,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>8,230</h3>
+            <p className="stat-number">8,230</p>
             <p>Games Tracked</p>
           </div>
         </div>
@@ -175,7 +176,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>125,000+</h3>
+            <p className="stat-number">125,000+</p>
             <p>Achievements</p>
           </div>
         </div>
@@ -186,7 +187,7 @@ function Home() {
           </div>
 
           <div>
-            <h3>98,760</h3>
+            <p className="stat-number">98,760</p>
             <p>Unlocked</p>
           </div>
         </div>
@@ -265,7 +266,7 @@ function Home() {
         <div className="game-grid">
           <div className="game-card">
             <img
-              src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg"
+              src={cs2Image}
               alt="Counter-Strike 2"
             />
 
@@ -280,7 +281,7 @@ function Home() {
 
           <div className="game-card">
             <img
-              src="https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg"
+              src={rdr2Image}
               alt="Red Dead Redemption 2"
             />
 
@@ -297,7 +298,7 @@ function Home() {
 
           <div className="game-card">
             <img
-              src="https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg"
+              src={eldenRingImage}
               alt="Elden Ring"
             />
 

@@ -1,9 +1,4 @@
 User-agent: *
 Allow: /
 
-Disallow: /dashboard/
-Disallow: /profile/
-Disallow: /settings/
-Disallow: /admin/
-
-Sitemap: https://achievementhub.com/sitemap.xml
+Sitemap: https://achievementhub.org/sitemap.xml

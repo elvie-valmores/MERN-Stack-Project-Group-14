@@ -1,5 +1,14 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import {
   ArrowLeft,
   CheckCircle2,
@@ -8,55 +17,117 @@ import {
   LockKeyhole,
   Mail,
   ShieldCheck,
-  Trophy
+  Trophy,
 } from "lucide-react";
-import achievementLogo from "../assets/images/223-cropped.webp";
+
+import achievementLogo from "../assets/images/223-cropped-optimized.webp";
+import GoogleSignInButton from "../components/GoogleSignInButton";
+
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5050"
+).replace(/\/$/, "");
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
 
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] =
+    useState(false);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [messageType, setMessageType] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [canResend, setCanResend] =
+    useState(false);
+
+  const [resendLoading, setResendLoading] =
+    useState(false);
 
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem("rememberedEmail");
+    const registeredEmail =
+      location.state?.registeredEmail;
 
-    if (rememberedEmail) {
+    const verificationMessage =
+      location.state?.verificationMessage;
+
+    const rememberedEmail =
+      localStorage.getItem(
+        "rememberedEmail"
+      );
+
+    if (registeredEmail) {
       setFormData((current) => ({
         ...current,
-        email: rememberedEmail
+        email: registeredEmail,
+      }));
+
+      setCanResend(true);
+    } else if (rememberedEmail) {
+      setFormData((current) => ({
+        ...current,
+        email: rememberedEmail,
       }));
 
       setRememberMe(true);
     }
-  }, []);
+
+    if (verificationMessage) {
+      setMessage(verificationMessage);
+      setMessageType("success");
+    }
+  }, [
+    location.state?.registeredEmail,
+    location.state?.verificationMessage,
+  ]);
 
   const handleChange = (event) => {
     setFormData({
       ...formData,
-      [event.target.name]: event.target.value
+      [event.target.name]:
+        event.target.value,
     });
 
     setMessage("");
+    setMessageType("");
+
+    if (event.target.name === "email") {
+      setCanResend(false);
+    }
   };
 
   const validateForm = () => {
-    if (!formData.email.trim() || !formData.password.trim()) {
-      setMessage("Please enter your email and password.");
+    if (
+      !formData.email.trim() ||
+      !formData.password.trim()
+    ) {
+      setMessage(
+        "Please enter your email and password."
+      );
+
       setMessageType("error");
       return false;
     }
 
     if (!formData.email.includes("@")) {
-      setMessage("Please enter a valid email address.");
+      setMessage(
+        "Please enter a valid email address."
+      );
+
       setMessageType("error");
       return false;
     }
@@ -73,36 +144,74 @@ function Login() {
 
     setLoading(true);
     setMessage("");
+    setMessageType("");
+    setCanResend(false);
 
     try {
       const response = await fetch(
-        "http://localhost:5050/api/auth/login",
+        `${API_URL}/api/auth/login`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type":
+              "application/json",
           },
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+            email: formData.email
+              .trim()
+              .toLowerCase(),
+
+            password: formData.password,
+          }),
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.message || "Incorrect email or password.");
+        setMessage(
+          data.message ||
+            "Incorrect email or password."
+        );
+
         setMessageType("error");
+
+        if (response.status === 403) {
+          setCanResend(true);
+
+          if (data.email) {
+            setFormData((current) => ({
+              ...current,
+              email: data.email,
+            }));
+          }
+        }
+
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data)
+      );
 
       if (rememberMe) {
-        localStorage.setItem("rememberedEmail", formData.email);
+        localStorage.setItem(
+          "rememberedEmail",
+          formData.email
+            .trim()
+            .toLowerCase()
+        );
       } else {
-        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem(
+          "rememberedEmail"
+        );
       }
 
-      setMessage("Login successful. Opening your dashboard...");
+      setMessage(
+        "Login successful. Opening your dashboard..."
+      );
+
       setMessageType("success");
 
       setTimeout(() => {
@@ -110,24 +219,94 @@ function Login() {
       }, 600);
     } catch (error) {
       setMessage(
-        "Cannot connect to the server. Make sure the backend is running."
+        "Cannot connect to the server. Please try again later."
       );
+
       setMessageType("error");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResendVerification =
+    async () => {
+      const email = formData.email
+        .trim()
+        .toLowerCase();
+
+      if (!email || !email.includes("@")) {
+        setMessage(
+          "Enter your email address first."
+        );
+
+        setMessageType("error");
+        return;
+      }
+
+      setResendLoading(true);
+      setMessage("");
+      setMessageType("");
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/auth/resend-verification`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              email,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setMessage(
+            data.message ||
+              "Could not resend the verification email."
+          );
+
+          setMessageType("error");
+          return;
+        }
+
+        setMessage(
+          data.message ||
+            "A new verification email has been sent."
+        );
+
+        setMessageType("success");
+      } catch (error) {
+        setMessage(
+          "Cannot connect to the server. Please try again later."
+        );
+
+        setMessageType("error");
+      } finally {
+        setResendLoading(false);
+      }
+    };
+
   return (
     <main className="login-split-page">
-      <Link to="/" className="auth-back-link login-back-link">
+      <Link
+        to="/"
+        className="auth-back-link login-back-link"
+      >
         <ArrowLeft size={18} />
         Back to Home
       </Link>
 
       <div className="login-split-card">
         <section className="login-showcase">
-          <Link to="/" className="login-showcase-logo">
+          <Link
+            to="/"
+            className="login-showcase-logo"
+          >
             <img
               src={achievementLogo}
               alt="Achievement Hub"
@@ -145,24 +324,34 @@ function Login() {
             </h1>
 
             <p>
-              Log in to track your games, unlock achievements, and see your
-              progress in one place.
+              Log in to track your games,
+              unlock achievements, and see
+              your progress in one place.
             </p>
 
             <div className="login-benefits">
               <div>
                 <CheckCircle2 />
-                <span>Track your Steam library</span>
+
+                <span>
+                  Track your Steam library
+                </span>
               </div>
 
               <div>
                 <Trophy />
-                <span>Monitor achievement progress</span>
+
+                <span>
+                  Monitor achievement progress
+                </span>
               </div>
 
               <div>
                 <ShieldCheck />
-                <span>Keep your account secure</span>
+
+                <span>
+                  Keep your account secure
+                </span>
               </div>
             </div>
           </div>
@@ -171,16 +360,42 @@ function Login() {
         <section className="login-form-side">
           <div className="login-form-heading">
             <h2>Log In</h2>
-            <p>Enter your account details to continue.</p>
+
+            <p>
+              Enter your account details to
+              continue.
+            </p>
           </div>
 
           {message && (
-            <div className={`auth-message ${messageType}`}>
+            <div
+              className={`auth-message ${messageType}`}
+              role="status"
+              aria-live="polite"
+            >
               {message}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} noValidate>
+          {canResend && (
+            <button
+              type="button"
+              className="auth-secondary-btn"
+              onClick={
+                handleResendVerification
+              }
+              disabled={resendLoading}
+            >
+              {resendLoading
+                ? "Sending..."
+                : "Resend Verification Email"}
+            </button>
+          )}
+
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+          >
             <label htmlFor="login-email">
               Email Address
             </label>
@@ -209,7 +424,11 @@ function Login() {
               <input
                 id="login-password"
                 name="password"
-                type={showPassword ? "text" : "password"}
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 value={formData.password}
@@ -219,9 +438,15 @@ function Login() {
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() =>
+                  setShowPassword(
+                    !showPassword
+                  )
+                }
                 aria-label={
-                  showPassword ? "Hide password" : "Show password"
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
                 }
               >
                 {showPassword ? (
@@ -238,7 +463,9 @@ function Login() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(event) =>
-                    setRememberMe(event.target.checked)
+                    setRememberMe(
+                      event.target.checked
+                    )
                   }
                 />
 
@@ -255,12 +482,21 @@ function Login() {
               type="submit"
               disabled={loading}
             >
-              {loading ? "Logging In..." : "Log In"}
+              {loading
+                ? "Logging In..."
+                : "Log In"}
             </button>
           </form>
 
+          <GoogleSignInButton
+            setMessage={setMessage}
+            setMessageType={setMessageType}
+          />
+
           <div className="auth-divider">
-            <span>New to Achievement Hub?</span>
+            <span>
+              New to Achievement Hub?
+            </span>
           </div>
 
           <Link

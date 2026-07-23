@@ -271,7 +271,7 @@ a {
   height: 36px;
 }
 
-.stat-card h3 {
+.stat-card .stat-number {
   font-size: 35px;
   line-height: 1;
   margin-bottom: 10px;
