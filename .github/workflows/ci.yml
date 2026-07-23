@@ -93,8 +93,7 @@ jobs:
           cd /var/www/achievement-hub
 
           git fetch origin main
-          git checkout main
-          git reset --hard origin/main
+          git checkout -f -B main FETCH_HEAD
 
           cd api
           npm ci --omit=dev
