@@ -1,4 +1,7 @@
-import { GoogleLogin } from "@react-oauth/google";
+import {
+  GoogleLogin,
+  GoogleOAuthProvider,
+} from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 
 const API_URL = (
@@ -6,18 +9,11 @@ const API_URL = (
   "http://localhost:5050"
 ).replace(/\/$/, "");
 
-function GoogleSignInButton({
+function GoogleSignInContent({
   setMessage,
   setMessageType,
 }) {
   const navigate = useNavigate();
-
-  const googleClientId =
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
-
-  if (!googleClientId) {
-    return null;
-  }
 
   const handleGoogleSuccess = async (
     googleResponse
@@ -31,8 +27,7 @@ function GoogleSignInButton({
         {
           method: "POST",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             credential:
@@ -105,6 +100,23 @@ function GoogleSignInButton({
         />
       </div>
     </>
+  );
+}
+
+function GoogleSignInButton(props) {
+  const googleClientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
+  if (!googleClientId) {
+    return null;
+  }
+
+  return (
+    <GoogleOAuthProvider
+      clientId={googleClientId}
+    >
+      <GoogleSignInContent {...props} />
+    </GoogleOAuthProvider>
   );
 }
 
