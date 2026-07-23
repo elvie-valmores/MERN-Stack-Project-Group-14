@@ -20,7 +20,7 @@ import {
   Trophy,
 } from "lucide-react";
 
-import achievementLogo from "../assets/images/223-cropped.webp";
+import achievementLogo from "../assets/images/223-cropped-optimized.webp";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 
 const API_URL = (

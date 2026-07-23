@@ -10,8 +10,11 @@ import {
   BarChart3
 } from "lucide-react";
 
-import controllerImg from "../assets/images/controller.webp";
-import achievementLogo from "../assets/images/223-cropped.webp";
+import controllerImg from "../assets/images/controller-optimized.webp";
+import achievementLogo from "../assets/images/223-cropped-optimized.webp";
+import cs2Image from "../assets/images/counter-strike-2.webp";
+import rdr2Image from "../assets/images/red-dead-redemption-2.webp";
+import eldenRingImage from "../assets/images/elden-ring.webp";
 
 function Home() {
   const storedUser = JSON.parse(
@@ -263,7 +266,7 @@ function Home() {
         <div className="game-grid">
           <div className="game-card">
             <img
-              src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg"
+              src={cs2Image}
               alt="Counter-Strike 2"
             />
 
@@ -278,7 +281,7 @@ function Home() {
 
           <div className="game-card">
             <img
-              src="https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg"
+              src={rdr2Image}
               alt="Red Dead Redemption 2"
             />
 
@@ -295,7 +298,7 @@ function Home() {
 
           <div className="game-card">
             <img
-              src="https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg"
+              src={eldenRingImage}
               alt="Elden Ring"
             />
 
