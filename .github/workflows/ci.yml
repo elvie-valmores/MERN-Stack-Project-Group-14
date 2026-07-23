@@ -1,4 +1,4 @@
-name: Achievement Hub CI
+name: Achievement Hub CI/CD
 
 on:
   push:
@@ -66,3 +66,43 @@ jobs:
         env:
           VITE_API_URL: http://localhost:5050
           VITE_GOOGLE_CLIENT_ID: ""
+
+  deploy:
+    name: Deploy to DigitalOcean
+    runs-on: ubuntu-latest
+    needs:
+      - backend-tests
+      - frontend-build
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/steam-integration'
+
+    steps:
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.DROPLET_SSH_KEY }}" > ~/.ssh/achievementhub_deploy
+          chmod 600 ~/.ssh/achievementhub_deploy
+          ssh-keyscan -H "${{ secrets.DROPLET_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy application
+        run: |
+          ssh -i ~/.ssh/achievementhub_deploy \
+            "${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}" <<'REMOTE'
+          set -e
+
+          cd /var/www/achievement-hub
+
+          git fetch origin steam-integration
+          git checkout steam-integration
+          git reset --hard origin/steam-integration
+
+          cd api
+          npm ci --omit=dev
+          pm2 restart achievement-hub-api --update-env
+
+          cd ../frontend
+          npm ci
+          npm run build
+
+          systemctl reload apache2
+          REMOTE
